@@ -278,7 +278,7 @@ public class NomadCloud extends AbstractCloudImpl {
         return Collections.unmodifiableList(templates);
     }
 
-    public NomadApi Nomad() {
+    public NomadApi nomad() {
         return nomad;
     }
 }

@@ -20,24 +20,24 @@ public class NomadSlave extends AbstractCloudSlave implements EphemeralNode {
     private final Boolean reusable;
 
     public NomadSlave(
-        NomadCloud cloud,
-        String name,
-        String nodeDescription,
-        NomadSlaveTemplate template,
-        String labelString,
-        hudson.slaves.RetentionStrategy retentionStrategy,
-        List<? extends NodeProperty<?>> nodeProperties
+            NomadCloud cloud,
+            String name,
+            String nodeDescription,
+            NomadSlaveTemplate template,
+            String labelString,
+            hudson.slaves.RetentionStrategy retentionStrategy,
+            List<? extends NodeProperty<?>> nodeProperties
     ) throws Descriptor.FormException, IOException {
         super(
-            name,
-            nodeDescription,
-            template.getRemoteFs(),
-            template.getNumExecutors(),
-            template.getMode(),
-            labelString,
-            new JNLPLauncher(),
-            retentionStrategy,
-            nodeProperties
+                name,
+                nodeDescription,
+                template.getRemoteFs(),
+                template.getNumExecutors(),
+                template.getMode(),
+                labelString,
+                new JNLPLauncher(),
+                retentionStrategy,
+                nodeProperties
         );
 
         this.cloud = cloud;
@@ -72,9 +72,9 @@ public class NomadSlave extends AbstractCloudSlave implements EphemeralNode {
     }
 
     @Override
-    protected void _terminate(TaskListener listener)  {
+    protected void _terminate(TaskListener listener) {
         LOGGER.log(Level.INFO, "Asking Nomad to deregister slave '" + getNodeName() + "'");
-        cloud.Nomad().stopSlave(getNodeName());
+        cloud.nomad().stopSlave(getNodeName());
     }
 
     public NomadCloud getCloud() {

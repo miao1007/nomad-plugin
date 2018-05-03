@@ -125,7 +125,7 @@ public class NomadSlaveTemplate implements Describable<NomadSlaveTemplate> {
 
         @Override
         public String getDisplayName() {
-            return null;
+            return "";
         }
     }
 
