@@ -1,27 +1,26 @@
 package org.jenkinsci.plugins.nomad;
 
-import org.kohsuke.stapler.DataBoundConstructor;
-import org.kohsuke.stapler.QueryParameter;
-import hudson.Extension;
-
-import hudson.slaves.*;
-import okhttp3.OkHttpClient;
-import okhttp3.Request;
 import com.google.common.base.Optional;
 import com.google.common.base.Strings;
+import hudson.Extension;
 import hudson.model.Descriptor;
-import hudson.util.FormValidation;
 import hudson.model.Label;
 import hudson.model.Node;
+import hudson.slaves.AbstractCloudImpl;
+import hudson.slaves.NodeProperty;
+import hudson.slaves.NodeProvisioner;
+import hudson.util.FormValidation;
 import jenkins.model.Jenkins;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.List;
+import okhttp3.OkHttpClient;
+import okhttp3.Request;
+import org.kohsuke.stapler.DataBoundConstructor;
+import org.kohsuke.stapler.QueryParameter;
+import org.kohsuke.stapler.interceptor.RequirePOST;
+
+import java.util.*;
 import java.util.concurrent.*;
 import java.util.logging.Level;
 import java.util.logging.Logger;
-
 public class NomadCloud extends AbstractCloudImpl {
 
     private static final Logger LOGGER = Logger.getLogger(NomadCloud.class.getName());
@@ -83,7 +82,7 @@ public class NomadCloud extends AbstractCloudImpl {
         if (template != null) {
             try {
                 while (excessWorkload > 0) {
-                    
+
                     LOGGER.log(Level.INFO, "Excess workload of " + excessWorkload + ", provisioning new Jenkins slave on Nomad cluster");
 
                     final String slaveName = template.createSlaveName();
@@ -202,7 +201,9 @@ public class NomadCloud extends AbstractCloudImpl {
             return "Nomad";
         }
 
+        @RequirePOST
         public FormValidation doTestConnection(@QueryParameter("nomadUrl") String nomadUrl) {
+            Objects.requireNonNull(Jenkins.getInstance()).checkPermission(Jenkins.ADMINISTER);
             try {
                 Request request = new Request.Builder()
                         .url(nomadUrl + "/v1/agent/self")
@@ -217,7 +218,9 @@ public class NomadCloud extends AbstractCloudImpl {
             }
         }
 
+        @RequirePOST
         public FormValidation doCheckName(@QueryParameter String name) {
+            Objects.requireNonNull(Jenkins.getInstance()).checkPermission(Jenkins.ADMINISTER);
             if (Strings.isNullOrEmpty(name)) {
                 return FormValidation.error("Name must be set");
             } else {
