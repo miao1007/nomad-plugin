@@ -5,12 +5,12 @@
   <parent>
     <groupId>org.jenkins-ci.plugins</groupId>
     <artifactId>plugin</artifactId>
-    <version>2.14</version>
+    <version>2.15</version>
     <relativePath />
   </parent>
 
   <artifactId>nomad</artifactId>
-  <version>0.5-SNAPSHOT</version>
+  <version>0.5.1-SNAPSHOT</version>
   <packaging>hpi</packaging>
 
   <name>Nomad Plugin</name>
@@ -29,7 +29,7 @@
     <connection>scm:git:ssh://github.com/jenkinsci/nomad-plugin.git</connection>
     <developerConnection>scm:git:ssh://git@github.com/jenkinsci/nomad-plugin.git</developerConnection>
     <url>https://github.com/jenkinsci/nomad-plugin</url>
-    <tag>nomad-0.3.1</tag>
+    <tag>v0.5.1</tag>
   </scm>
 
   <properties>
