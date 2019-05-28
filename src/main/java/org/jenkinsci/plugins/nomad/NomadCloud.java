@@ -21,16 +21,20 @@ import java.util.*;
 import java.util.concurrent.*;
 import java.util.logging.Level;
 import java.util.logging.Logger;
-
 public class NomadCloud extends AbstractCloudImpl {
 
     private static final Logger LOGGER = Logger.getLogger(NomadCloud.class.getName());
+
     private final List<? extends NomadSlaveTemplate> templates;
+
     private final String nomadUrl;
     private String jenkinsUrl;
     private String jenkinsTunnel;
     private String slaveUrl;
+    private int workerTimeout = 1;
+
     private NomadApi nomad;
+
     private int pending = 0;
 
     @DataBoundConstructor
@@ -40,13 +44,16 @@ public class NomadCloud extends AbstractCloudImpl {
             String jenkinsUrl,
             String jenkinsTunnel,
             String slaveUrl,
-            List<? extends NomadSlaveTemplate> templates) {
+            String workerTimeout,
+            List<? extends NomadSlaveTemplate> templates)
+    {
         super(name, null);
 
         this.nomadUrl = nomadUrl;
         this.jenkinsUrl = jenkinsUrl;
         this.jenkinsTunnel = jenkinsTunnel;
         this.slaveUrl = slaveUrl;
+        setWorkerTimeout(workerTimeout);
 
         if (templates == null) {
             this.templates = Collections.emptyList();
@@ -122,11 +129,9 @@ public class NomadCloud extends AbstractCloudImpl {
         }
 
         public Node call() throws Exception {
-
             final NomadSlave slave = new NomadSlave(
-                    cloud,
                     slaveName,
-                    "Nomad Jenkins Slave",
+                    name,
                     template,
                     template.getLabels(),
                     new NomadRetentionStrategy(template.getIdleTerminationInMinutes()),
@@ -159,17 +164,18 @@ public class NomadCloud extends AbstractCloudImpl {
             ExecutorService executorService = Executors.newCachedThreadPool();
             Future<Boolean> future = executorService.submit(callableTask);
 
-            try {
-                future.get(5, TimeUnit.MINUTES);
+            try{
+                future.get(cloud.workerTimeout, TimeUnit.MINUTES);
                 LOGGER.log(Level.INFO, "Connection established");
             } catch (Exception ex) {
-                LOGGER.log(Level.SEVERE, "Slave computer did not come online within {0} minutes, terminating slave");
+                LOGGER.log(Level.SEVERE, "Slave computer did not come online within " + workerTimeout + " minutes, terminating slave"+ slave);
                 slave.terminate();
+                throw new RuntimeException("Timed out waiting for agent to start up. Timeout: " + workerTimeout + " minutes.");
             } finally {
                 future.cancel(true);
                 executorService.shutdown();
+                pending -= template.getNumExecutors();
             }
-            pending -= template.getNumExecutors();
             return slave;
         }
     }
@@ -221,7 +227,9 @@ public class NomadCloud extends AbstractCloudImpl {
             }
         }
 
+        @RequirePOST
         public FormValidation doCheckName(@QueryParameter String name) {
+            Objects.requireNonNull(Jenkins.getInstance()).checkPermission(Jenkins.ADMINISTER);
             if (Strings.isNullOrEmpty(name)) {
                 return FormValidation.error("Name must be set");
             } else {
@@ -231,7 +239,11 @@ public class NomadCloud extends AbstractCloudImpl {
     }
 
     // Getters
-    protected String getNomadUrl() {
+    public String getName() {
+        return name;
+    }
+
+    public String getNomadUrl() {
         return nomadUrl;
     }
 
@@ -243,12 +255,24 @@ public class NomadCloud extends AbstractCloudImpl {
         return slaveUrl;
     }
 
+    public int getWorkerTimeout() {
+        return workerTimeout;
+    }
+
     public void setJenkinsUrl(String jenkinsUrl) {
         this.jenkinsUrl = jenkinsUrl;
     }
 
     public void setSlaveUrl(String slaveUrl) {
         this.slaveUrl = slaveUrl;
+    }
+
+    public void setWorkerTimeout(String workerTimeout) {
+        try {
+            this.workerTimeout = Integer.parseInt(workerTimeout);
+        } catch(NumberFormatException ex) {
+            LOGGER.log(Level.WARNING, "Failed to parse timeout defaulting to current value (default: 1 minute): " + workerTimeout + " minutes");
+        }
     }
 
     public void setNomad(NomadApi nomad) {
