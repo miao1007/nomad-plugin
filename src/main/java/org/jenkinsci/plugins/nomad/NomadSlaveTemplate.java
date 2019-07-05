@@ -43,6 +43,8 @@ public class NomadSlaveTemplate implements Describable<NomadSlaveTemplate> {
     private final String switchUser;
     private final Node.Mode mode;
     private final List<? extends NomadPortTemplate> ports;
+    private final String extraHosts;
+    private final String capAdd;
 
     private NomadCloud cloud;
     private String driver;
@@ -74,7 +76,9 @@ public class NomadSlaveTemplate implements Describable<NomadSlaveTemplate> {
             Boolean forcePull,
             String hostVolumes,
             String switchUser,
-            List<? extends NomadPortTemplate> ports
+            List<? extends NomadPortTemplate> ports,
+            String extraHosts,
+            String capAdd
     ) {
         if (StringUtils.isNotEmpty(prefix))
             this.prefix = prefix;
@@ -113,6 +117,8 @@ public class NomadSlaveTemplate implements Describable<NomadSlaveTemplate> {
         } else {
             this.ports = ports;
         }
+        this.extraHosts = extraHosts;
+        this.capAdd = capAdd;
         readResolve();
     }
 
@@ -265,5 +271,13 @@ public class NomadSlaveTemplate implements Describable<NomadSlaveTemplate> {
 
     public List<? extends NomadPortTemplate> getPorts() {
         return Collections.unmodifiableList(ports);
+    }
+
+    public String getCapAdd() {
+        return capAdd;
+    }
+
+    public String getExtraHosts() {
+        return extraHosts;
     }
 }
