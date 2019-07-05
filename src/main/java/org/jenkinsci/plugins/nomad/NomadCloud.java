@@ -5,10 +5,12 @@ import hudson.Extension;
 import hudson.model.Descriptor;
 import hudson.model.Label;
 import hudson.model.Node;
+import hudson.security.ACL;
 import hudson.slaves.AbstractCloudImpl;
 import hudson.slaves.Cloud;
 import hudson.slaves.NodeProvisioner;
 import hudson.util.FormValidation;
+import hudson.util.ListBoxModel;
 import hudson.util.Secret;
 import jenkins.model.Jenkins;
 import jenkins.slaves.JnlpSlaveAgentProtocol;
@@ -18,11 +20,22 @@ import org.jenkinsci.plugins.nomad.Api.JobInfo;
 import org.kohsuke.stapler.DataBoundConstructor;
 import org.kohsuke.stapler.QueryParameter;
 import org.kohsuke.stapler.verb.POST;
+import com.cloudbees.plugins.credentials.CredentialsMatchers;
+import com.cloudbees.plugins.credentials.CredentialsProvider;
+import static com.cloudbees.plugins.credentials.CredentialsMatchers.filter;
+import static com.cloudbees.plugins.credentials.CredentialsProvider.lookupCredentials;
+import static com.cloudbees.plugins.credentials.CredentialsMatchers.withId;
+import static com.cloudbees.plugins.credentials.domains.URIRequirementBuilder.fromUri;
+import com.cloudbees.plugins.credentials.common.StandardListBoxModel;
+import com.cloudbees.plugins.credentials.domains.DomainRequirement;
+import org.jenkinsci.plugins.plaincredentials.StringCredentials;
 
 import java.util.*;
 import java.util.concurrent.*;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+import static org.apache.commons.lang.StringUtils.trimToEmpty;
+
 public class NomadCloud extends AbstractCloudImpl {
 
     private static final Logger LOGGER = Logger.getLogger(NomadCloud.class.getName());
@@ -30,7 +43,7 @@ public class NomadCloud extends AbstractCloudImpl {
     private final List<? extends NomadSlaveTemplate> templates;
 
     private final String nomadUrl;
-    private Secret nomadACL;
+    private final String nomadACLCredentialsId;
     private String jenkinsUrl;
     private String jenkinsTunnel;
     private String slaveUrl;
@@ -50,13 +63,13 @@ public class NomadCloud extends AbstractCloudImpl {
             String jenkinsTunnel,
             String slaveUrl,
             String workerTimeout,
-            String nomadACL,
+            String nomadACLCredentialsId,
             Boolean prune,
             List<? extends NomadSlaveTemplate> templates)
     {
         super(name, null);
 
-        this.nomadACL = Secret.fromString(nomadACL);
+        this.nomadACLCredentialsId = nomadACLCredentialsId;
         this.nomadUrl = nomadUrl;
 
         this.jenkinsUrl = jenkinsUrl;
@@ -170,7 +183,7 @@ public class NomadCloud extends AbstractCloudImpl {
             }
 
             LOGGER.log(Level.INFO, "Asking Nomad to schedule new Jenkins slave");
-            nomad.startSlave(slaveName, nomadACL.getPlainText(), jnlpSecret, template);
+            nomad.startSlave(slaveName, getNomadACL(), jnlpSecret, template);
 
             // Check scheduling success
             Callable<Boolean> callableTask = () -> {
@@ -260,6 +273,20 @@ public class NomadCloud extends AbstractCloudImpl {
                 return FormValidation.ok();
             }
         }
+
+        public ListBoxModel doFillNomadACLCredentialsIdItems(@QueryParameter("nomadACLCredentialsId") String credentialsId) {
+            if (!Jenkins.getInstance().hasPermission(Jenkins.ADMINISTER)) {
+                return new StandardListBoxModel().includeCurrentValue(credentialsId);
+            }
+            return new StandardListBoxModel()
+                    .withEmptySelection()
+                    .withMatching(
+                            CredentialsMatchers.always(),
+                            CredentialsProvider.lookupCredentials(StringCredentials.class,
+                                    Jenkins.getInstance(),
+                                    ACL.SYSTEM,
+                                    Collections.emptyList()));
+        }
     }
 
     // Getters
@@ -283,11 +310,27 @@ public class NomadCloud extends AbstractCloudImpl {
         return workerTimeout;
     }
 
+    public String getNomadACLCredentialsId() {
+        return nomadACLCredentialsId;
+    }
+
     public String getNomadACL() {
-        if (nomadACL != null)
-            return this.nomadACL.getPlainText();
-        else
+        return secretFor(this.getNomadACLCredentialsId());
+    }
+
+    private static String secretFor(String credentialsId) {
+        List<StringCredentials> creds = filter(
+                lookupCredentials(StringCredentials.class,
+                        Jenkins.getInstance(),
+                        ACL.SYSTEM,
+                        Collections.<DomainRequirement>emptyList()),
+                withId(trimToEmpty(credentialsId))
+        );
+        if (creds.size() > 0) {
+            return creds.get(0).getSecret().getPlainText();
+        } else {
             return null;
+        }
     }
 
     public void setJenkinsUrl(String jenkinsUrl) {
@@ -315,10 +358,6 @@ public class NomadCloud extends AbstractCloudImpl {
 
     public void setNomad(NomadApi nomad) {
         this.nomad = nomad;
-    }
-
-    public void setNomadACL(String token) {
-        this.nomadACL = Secret.fromString(token);
     }
 
     public int getPending() {
