@@ -1,10 +1,13 @@
-all: maven-release-plugin_prepare maven-release-plugin_perform
+all: maven-release-plugin_prepare maven-release-plugin_perform hpi
 
 maven-release-plugin_prepare:
 	@mvn org.apache.maven.plugins:maven-release-plugin:prepare
 
 maven-release-plugin_perform:
 	@mvn org.apache.maven.plugins:maven-release-plugin:perform
+
+hpi:
+	@mvn org.jenkins-ci.tools:maven-hpi-plugin:hpi
 
 .PHONY: all
 
