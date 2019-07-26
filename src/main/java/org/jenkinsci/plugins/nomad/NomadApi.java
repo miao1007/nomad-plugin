@@ -176,7 +176,7 @@ public final class NomadApi {
             driverConfig.put("image", template.getImage());
 
             String hostVolumes = template.getHostVolumes();
-            if (!hostVolumes.isEmpty()) {
+            if (hostVolumes != null && !hostVolumes.isEmpty()) {
                 driverConfig.put("volumes", StringUtils.split(hostVolumes, ","));
             }
 
@@ -186,17 +186,17 @@ public final class NomadApi {
             driverConfig.put("network_mode", template.getNetwork());
 
             String extraHosts = template.getExtraHosts();
-            if (!extraHosts.isEmpty()) {
+            if (extraHosts != null && !extraHosts.isEmpty()) {
                 driverConfig.put("extra_hosts", StringUtils.split(extraHosts, ", "));
             }
 
             String capAdd = template.getCapAdd();
-            if (!capAdd.isEmpty()) {
+            if (capAdd != null && !capAdd.isEmpty()) {
                 driverConfig.put("cap_add", StringUtils.split(capAdd, ", "));
             }
 
             String capDrop = template.getCapDrop();
-            if (!capDrop.isEmpty()) {
+            if (capDrop != null && !capDrop.isEmpty()) {
                 driverConfig.put("cap_drop", StringUtils.split(capDrop, ", "));
             }
         }
