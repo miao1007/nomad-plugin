@@ -16,7 +16,7 @@ public final class NomadApi {
 
     private static final Logger LOGGER = Logger.getLogger(NomadApi.class.getName());
 
-    private static final OkHttpClient client = new OkHttpClient();
+    private static final OkHttpClient client = new OkHttpClient.Builder().build();
 
     private final String nomadApi;
 
@@ -48,7 +48,12 @@ public final class NomadApi {
             Request request = builder.put(body)
                 .build();
 
-            client.newCall(request).execute().body().close();
+            Response execute = client.newCall(request).execute();
+            if (execute.code() != 200){
+                LOGGER.log(Level.SEVERE, execute.body().string());
+            } else {
+                execute.body().close();
+            }
         } catch (IOException e) {
             LOGGER.log(Level.SEVERE, e.getMessage(), e);
         }
@@ -273,10 +278,6 @@ public final class NomadApi {
         );
 
         Gson gson = new Gson();
-        JsonObject jobJson = new JsonObject();
-
-        jobJson.add("Job", gson.toJsonTree(job));
-
-        return gson.toJson(jobJson);
+        return gson.toJson(job);
     }
 }

@@ -18,7 +18,6 @@ public class NomadCloudTest {
     private NomadCloud nomadCloud = new NomadCloud(
             "nomad",
             "nomadUrl",
-            "jenkinsUrl",
             "jenkinsTunnel",
             "slaveUrl",
             "1",

@@ -14,9 +14,7 @@
     <f:textbox default="http://127.0.0.1:4646"/>
   </f:entry>
 
-  <f:entry title="Jenkins Base URL" field="jenkinsUrl" description="Jenkins base URL">
-    <f:textbox default="${instance.getJenkinsUrl()}"/>
-  </f:entry>
+  <f:validateButton title="Test connection" progress="Testing API connectivity..." method="testConnection" with="nomadUrl"/>
 
   <f:entry title="Jenkins Tunnel" field="jenkinsTunnel" description="Jenkins Tunnel [HOST:PORT] Connect to the specified host and port, instead of connecting directly to Jenkins. Useful when connection to Hudson needs to be tunneled.">
     <f:textbox default="${instance.getJenkinsTunnel()}"/>
@@ -33,8 +31,6 @@
   <f:entry title="Jenkins Slave URL" field="slaveUrl" description="Jenkins slave URL">
     <f:textbox default="${instance.getSlaveUrl()}"/>
   </f:entry>
-
-  <f:validateButton title="Test connection" progress="Testing API connectivity..." method="testConnection" with="nomadUrl"/>
 
   <f:entry title="Slave Templates">
     <f:repeatable field="templates">

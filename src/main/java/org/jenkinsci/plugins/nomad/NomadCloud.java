@@ -1,6 +1,9 @@
 package org.jenkinsci.plugins.nomad;
 
 import com.google.common.base.Strings;
+import com.google.gson.Gson;
+import com.google.gson.GsonBuilder;
+import com.google.gson.JsonObject;
 import hudson.Extension;
 import hudson.model.Descriptor;
 import hudson.model.Label;
@@ -16,6 +19,7 @@ import jenkins.model.Jenkins;
 import jenkins.slaves.JnlpSlaveAgentProtocol;
 import okhttp3.OkHttpClient;
 import okhttp3.Request;
+import okhttp3.ResponseBody;
 import org.jenkinsci.plugins.nomad.Api.JobInfo;
 import org.kohsuke.stapler.DataBoundConstructor;
 import org.kohsuke.stapler.QueryParameter;
@@ -60,7 +64,6 @@ public class NomadCloud extends AbstractCloudImpl {
     public NomadCloud(
             String name,
             String nomadUrl,
-            @Nullable String jenkinsUrl,
             String jenkinsTunnel,
             String slaveUrl,
             String workerTimeout,
@@ -88,12 +91,13 @@ public class NomadCloud extends AbstractCloudImpl {
 
     private Object readResolve() {
         nomad = new NomadApi(nomadUrl);
+        jenkinsUrl = Jenkins.get().getRootUrl();
 
-        if (jenkinsUrl.equals("")) {
-            jenkinsUrl = Jenkins.get().getRootUrl();
+        if (Strings.isNullOrEmpty(jenkinsUrl)) {
+            throw new IllegalArgumentException("Please config Jenkins URL in configure");
         }
 
-        if (slaveUrl.equals("")) {
+        if (Strings.isNullOrEmpty(slaveUrl)) {
             slaveUrl = jenkinsUrl + "jnlpJars/slave.jar";
         }
 
@@ -248,13 +252,12 @@ public class NomadCloud extends AbstractCloudImpl {
             Objects.requireNonNull(Jenkins.get()).checkPermission(Jenkins.ADMINISTER);
             try {
                 Request request = new Request.Builder()
-                        .url(nomadUrl + "/v1/agent/self")
+                        .url(nomadUrl + "/v1//agent/health")
                         .build();
 
                 OkHttpClient client = new OkHttpClient();
-                client.newCall(request).execute().body().close();
-
-                return FormValidation.ok("Nomad API request succeeded.");
+                ResponseBody body = client.newCall(request).execute().body();
+                return FormValidation.ok(body.string());
             } catch (Exception e) {
                 return FormValidation.error(e.getMessage());
             }
