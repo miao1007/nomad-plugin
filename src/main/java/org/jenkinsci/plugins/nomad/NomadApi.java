@@ -66,7 +66,9 @@ public final class NomadApi {
                 .build();
 
         try {
-            client.newCall(request).execute().body().close();
+            ResponseBody body = client.newCall(request).execute().body();
+            String string = body.string();
+            body.close();
         } catch (IOException e) {
             LOGGER.log(Level.SEVERE, e.getMessage(), e);
         }
@@ -130,7 +132,7 @@ public final class NomadApi {
                 args.add(secret);
             }
 
-            driverConfig.put("jar_path", "/local/slave.jar");
+            driverConfig.put("jar_path", template.getAgentDir() + "slave.jar");
             driverConfig.put("args", args);
         } else if (template.isRawExecDriver()) {
             args.add("-jar");
@@ -244,7 +246,7 @@ public final class NomadApi {
                 ),
                 new LogConfig(1, 10),
                 new Artifact[]{
-                    new Artifact(cloud.getSlaveUrl(), null, "/local/")
+                    new Artifact(cloud.getSlaveUrl(), null, template.getAgentDir())
                 }
         );
 

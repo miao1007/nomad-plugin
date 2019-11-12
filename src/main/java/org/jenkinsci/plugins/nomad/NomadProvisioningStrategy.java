@@ -30,11 +30,10 @@ public class NomadProvisioningStrategy extends NodeProvisioner.Strategy {
     @Nonnull
     @Override
     public NodeProvisioner.StrategyDecision apply(@Nonnull NodeProvisioner.StrategyState strategyState) {
-        final Label label = strategyState.getLabel();
-        LoadStatisticsSnapshot snapshot = strategyState.getSnapshot();
         for ( Cloud nomadCloud : Jenkins.get().clouds ){
             if ( nomadCloud instanceof NomadCloud ) {
-
+                final Label label = strategyState.getLabel();
+                LoadStatisticsSnapshot snapshot = strategyState.getSnapshot();
                 LOGGER.log(Level.FINE, "Available executors={0} connecting executors={1} AdditionalPlannedCapacity={2} pending ={3}",
                         new Object[]{snapshot.getAvailableExecutors(), snapshot.getConnectingExecutors(), strategyState.getAdditionalPlannedCapacity(),((NomadCloud)nomadCloud).getPending() });
                 int availableCapacity = snapshot.getAvailableExecutors() +
@@ -62,9 +61,10 @@ public class NomadProvisioningStrategy extends NodeProvisioner.Strategy {
                     LOGGER.log(Level.FINE, "Provisioning not complete, consulting remaining strategies");
                     return NodeProvisioner.StrategyDecision.CONSULT_REMAINING_STRATEGIES;
                 }
+            } else {
+                return NodeProvisioner.StrategyDecision.CONSULT_REMAINING_STRATEGIES;
             }
         }
-        LOGGER.log(Level.FINE,"Provisioning not complete, consulting remaining strategies");
         return NodeProvisioner.StrategyDecision.CONSULT_REMAINING_STRATEGIES;
     }
 }

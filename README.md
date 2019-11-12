@@ -8,3 +8,7 @@ All documentation is available under the Jenkins [wiki page](https://wiki.jenkin
 
 **Community contributions are very welcome!**
 
+
+
+Q: SEVERE /tcpSlaveAgentListener/ is invalid: 404 null
+A: Configure Global Security - TCP port for inbound agents -fixed

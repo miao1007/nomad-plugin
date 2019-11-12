@@ -46,6 +46,11 @@
             <f:textbox default="50"/>
         </f:entry>
 
+        <f:entry title="Agent location" field="agentDir">
+            <f:textbox default="/local/" />
+        </f:entry>
+
+
         <f:entry title="Idle termination time" field="idleTerminationInMinutes">
             <f:textbox default="10" />
         </f:entry>
@@ -60,7 +65,7 @@
 
         <f:slave-mode name="mode" node="${instance}" />
 
-        <f:entry title="Workspace root" field="remoteFs">
+        <f:entry title="Workspace root(remoteFs)" field="remoteFs">
             <f:textbox/>
         </f:entry>
 

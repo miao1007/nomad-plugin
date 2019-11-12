@@ -30,6 +30,7 @@ import com.cloudbees.plugins.credentials.common.StandardListBoxModel;
 import com.cloudbees.plugins.credentials.domains.DomainRequirement;
 import org.jenkinsci.plugins.plaincredentials.StringCredentials;
 
+import javax.annotation.Nullable;
 import java.util.*;
 import java.util.concurrent.*;
 import java.util.logging.Level;
@@ -59,7 +60,7 @@ public class NomadCloud extends AbstractCloudImpl {
     public NomadCloud(
             String name,
             String nomadUrl,
-            String jenkinsUrl,
+            @Nullable String jenkinsUrl,
             String jenkinsTunnel,
             String slaveUrl,
             String workerTimeout,
@@ -71,8 +72,6 @@ public class NomadCloud extends AbstractCloudImpl {
 
         this.nomadACLCredentialsId = nomadACLCredentialsId;
         this.nomadUrl = nomadUrl;
-
-        this.jenkinsUrl = jenkinsUrl;
         this.jenkinsTunnel = jenkinsTunnel;
         this.slaveUrl = slaveUrl;
         setWorkerTimeout(workerTimeout);
@@ -186,7 +185,7 @@ public class NomadCloud extends AbstractCloudImpl {
             Callable<Boolean> callableTask = () -> {
                 try {
                     LOGGER.log(Level.INFO, "Slave scheduled, waiting for connection");
-                    Objects.requireNonNull(slave.toComputer()).waitUntilOnline();
+                    Objects.requireNonNull(slave.toComputer()).waitUntilOnline(); // a loop query
                 } catch (InterruptedException e) {
                     LOGGER.log(Level.SEVERE, "Waiting for connection was interrupted");
                     return false;

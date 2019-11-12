@@ -11,6 +11,7 @@ import jenkins.model.Jenkins;
 import org.apache.commons.lang.StringUtils;
 import org.kohsuke.stapler.DataBoundConstructor;
 
+import java.io.File;
 import java.util.*;
 import java.util.logging.Logger;
 
@@ -47,6 +48,7 @@ public class NomadSlaveTemplate implements Describable<NomadSlaveTemplate> {
     private final String extraHosts;
     private final String capAdd;
     private final String capDrop;
+    private final String agentDir;//where agent.jar download and run
 
 
     private String driver;
@@ -82,7 +84,8 @@ public class NomadSlaveTemplate implements Describable<NomadSlaveTemplate> {
             List<? extends NomadPortTemplate> ports,
             String extraHosts,
             String capAdd,
-            String capDrop
+            String capDrop,
+            String agentDir
     ) {
         if (StringUtils.isNotEmpty(prefix))
             this.prefix = prefix;
@@ -125,6 +128,7 @@ public class NomadSlaveTemplate implements Describable<NomadSlaveTemplate> {
         this.extraHosts = extraHosts;
         this.capAdd = capAdd;
         this.capDrop = capDrop;
+        this.agentDir = agentDir.endsWith(File.separator)? agentDir :(agentDir +File.separator);
         readResolve();
     }
 
@@ -290,5 +294,9 @@ public class NomadSlaveTemplate implements Describable<NomadSlaveTemplate> {
 
     public String getExtraHosts() {
         return extraHosts;
+    }
+
+    public String getAgentDir() {
+        return agentDir;
     }
 }
